@@ -4,8 +4,10 @@ import joblib
 import pandas as pd
 import uvicorn
 import os
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(title="Heart Disease Prediction API")
+Instrumentator().instrument(app).expose(app)
 
 # Load model and preprocessor
 MODEL_PATH = "models/model.joblib"

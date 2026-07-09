@@ -10,3 +10,4 @@ pytest
 ucimlrepo
 pydantic
 httpx
+prometheus-fastapi-instrumentator
