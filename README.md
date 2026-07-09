@@ -54,7 +54,18 @@ docker build -t heart-disease-api:latest .
 docker run -p 8000:8000 heart-disease-api:latest
 ```
 
-**Kubernetes Deployment (Local / Minikube):**
+**Kubernetes Deployment (Standard Manifests):**
 ```bash
 kubectl apply -f k8s/deployment.yaml
+```
+
+**Helm Chart Deployment (Recommended):**
+```bash
+helm upgrade --install heart-disease-api ./helm/heart-disease-api
+```
+
+## Monitoring
+The API is instrumented with Prometheus. You can access the real-time metrics endpoint at:
+```
+http://localhost:8000/metrics
 ```
