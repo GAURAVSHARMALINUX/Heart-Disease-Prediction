@@ -13,30 +13,65 @@ on:
       - '.github/workflows/wiki-sync.yml'
 
 jobs:
-  build-and-test:
+  code-quality:
+    name: Code Quality (Linting)
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      - name: Checkout repository
+        uses: actions/checkout@v3
         
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install flake8
+        run: pip install flake8
         
-    - name: Run training and testing
-      env:
-        PYTHONPATH: .
-      run: |
-        python data/download_data.py
-        python -m src.train
-        python -m pytest tests/
+      - name: Run Linting
+        run: flake8 src/ api/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+  model-training-and-tests:
+    name: Model Training & Unit Tests
+    needs: code-quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
         
-    - name: Build Docker image
-      run: |
-        docker build -t heart-disease-api:latest .
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Download Dataset
+        run: python data/download_data.py
+          
+      - name: Train Model
+        env:
+          PYTHONPATH: .
+        run: python -m src.train
+          
+      - name: Run Pytest
+        env:
+          PYTHONPATH: .
+        run: python -m pytest tests/
+
+  docker-build:
+    name: Build Docker Container
+    needs: model-training-and-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Build Docker image
+        run: docker build -t heart-disease-api:latest .
