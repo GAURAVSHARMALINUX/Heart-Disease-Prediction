@@ -11,7 +11,7 @@ COPY . .
 # For a production container, we might train beforehand and just copy the models/ folder.
 # Here we will expect models to be present or run the train script.
 RUN python data/download_data.py && \
-    python src/train.py
+    python -m src.train
 
 EXPOSE 8000
 
