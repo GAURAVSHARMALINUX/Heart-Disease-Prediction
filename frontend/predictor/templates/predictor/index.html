@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-grad: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --text-main: #ffffff;
+            --text-muted: #b0c4de;
+            --accent: #00f2fe;
+            --accent-grad: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            --danger: #ff4b2b;
+            --success: #00b09b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-grad);
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background: var(--accent-grad);
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 242, 254, 0.4);
+        }
+
+        .result-box {
+            margin-top: 40px;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .result-safe {
+            background: rgba(0, 176, 155, 0.2);
+            border: 1px solid var(--success);
+        }
+
+        .result-danger {
+            background: rgba(255, 75, 43, 0.2);
+            border: 1px solid var(--danger);
+        }
+
+        .error-box {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 75, 43, 0.2);
+            border: 1px solid var(--danger);
+            border-radius: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Heart Disease Predictor</h1>
+        <p class="subtitle">Enter patient clinical data to predict heart disease risk</p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" name="age" required value="50">
+                </div>
+                <div class="form-group">
+                    <label>Sex</label>
+                    <select name="sex" required>
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Chest Pain Type (0-3)</label>
+                    <input type="number" name="cp" min="0" max="3" required value="2">
+                </div>
+                <div class="form-group">
+                    <label>Resting Blood Pressure</label>
+                    <input type="number" name="trestbps" required value="120">
+                </div>
+                <div class="form-group">
+                    <label>Cholesterol (mg/dl)</label>
+                    <input type="number" name="chol" required value="240">
+                </div>
+                <div class="form-group">
+                    <label>Fasting Blood Sugar > 120 mg/dl</label>
+                    <select name="fbs" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Resting ECG Results (0-2)</label>
+                    <input type="number" name="restecg" min="0" max="2" required value="1">
+                </div>
+                <div class="form-group">
+                    <label>Max Heart Rate Achieved</label>
+                    <input type="number" name="thalach" required value="150">
+                </div>
+                <div class="form-group">
+                    <label>Exercise Induced Angina</label>
+                    <select name="exang" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>ST Depression (Oldpeak)</label>
+                    <input type="number" step="0.1" name="oldpeak" required value="1.0">
+                </div>
+                <div class="form-group">
+                    <label>Slope of ST Segment (0-2)</label>
+                    <input type="number" name="slope" min="0" max="2" required value="1">
+                </div>
+                <div class="form-group">
+                    <label>Major Vessels (0-4)</label>
+                    <input type="number" name="ca" min="0" max="4" required value="0">
+                </div>
+                <div class="form-group">
+                    <label>Thal (0-3)</label>
+                    <input type="number" name="thal" min="0" max="3" required value="2">
+                </div>
+            </div>
+            <div class="full-width">
+                <button type="submit">Predict Risk</button>
+            </div>
+        </form>
+
+        {% if error %}
+        <div class="error-box">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+
+        {% if result %}
+        <div class="result-box {% if result.prediction == 1 %}result-danger{% else %}result-safe{% endif %}">
+            <h2>Prediction: {% if result.prediction == 1 %}High Risk (Presence){% else %}Low Risk (Absence){% endif %}</h2>
+            <p>Confidence: <strong>{{ result.confidence }}%</strong></p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
