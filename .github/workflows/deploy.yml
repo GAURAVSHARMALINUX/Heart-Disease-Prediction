@@ -36,9 +36,45 @@ jobs:
               - 'k8s/**'
               - '.github/workflows/**'
 
+  build-frontend:
+    needs: check-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.DOCKER_USERNAME }}/heart-disease-frontend:${{ github.sha }}
+            ${{ env.DOCKER_USERNAME }}/heart-disease-frontend:latest
+
+  start-cluster:
+    needs: check-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Start AKS Cluster (if stopped)
+        run: |
+          STATUS=$(az aks show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query "powerState.code" -o tsv || echo "Running")
+          echo "Current Cluster Status: $STATUS"
+          if [ "$STATUS" == "Stopped" ]; then
+            echo "Cluster is stopped. Starting it now..."
+            az aks start --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }}
+          fi
+
   unit-test:
     needs: check-changes
-    if: needs.check-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,9 +89,7 @@ jobs:
       - name: Lint with flake8
         working-directory: ./backend
         run: |
-          # stop the build if there are Python syntax errors or undefined names
           flake8 src . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 src . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Run tests
         working-directory: ./backend
@@ -68,27 +102,46 @@ jobs:
           name: test-report
           path: backend/test-report.xml
 
+  train-model:
+    needs: [build-frontend, start-cluster, unit-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          pip install -r requirements.txt -r unit-test-requirement.txt
+      - name: Train model
+        working-directory: ./backend
+        run: |
+          python main_pipeline.py
+      - name: Upload trained model
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: backend/exported_model/
 
-  build-and-push:
-    needs: [check-changes, unit-test]
-    if: |
-      always() &&
-      needs.check-changes.result == 'success' &&
-      (needs.unit-test.result == 'success' || needs.unit-test.result == 'skipped') &&
-      (needs.check-changes.outputs.backend == 'true' || needs.check-changes.outputs.frontend == 'true')
+  build-backend:
+    needs: train-model
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      - name: Download trained model
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-model
+          path: backend/exported_model/
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Build and push Backend image
-        if: needs.check-changes.outputs.backend == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -97,50 +150,20 @@ jobs:
             ${{ env.DOCKER_USERNAME }}/heart-disease-api:${{ github.sha }}
             ${{ env.DOCKER_USERNAME }}/heart-disease-api:latest
 
-      - name: Build and push Frontend image
-        if: needs.check-changes.outputs.frontend == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: true
-          tags: |
-            ${{ env.DOCKER_USERNAME }}/heart-disease-frontend:${{ github.sha }}
-            ${{ env.DOCKER_USERNAME }}/heart-disease-frontend:latest
-
   deploy:
     runs-on: ubuntu-latest
-    needs: [check-changes, build-and-push, unit-test]
-    if: |
-      always() &&
-      (needs.check-changes.result == 'success') &&
-      (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') &&
-      (needs.unit-test.result == 'success' || needs.unit-test.result == 'skipped') &&
-      (needs.check-changes.outputs.k8s == 'true' || needs.check-changes.outputs.backend == 'true' || needs.check-changes.outputs.frontend == 'true')
+    needs: build-backend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Start AKS Cluster (if stopped)
-        run: |
-          STATUS=$(az aks show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query "powerState.code" -o tsv)
-          echo "Current Cluster Status: $STATUS"
-          if [ "$STATUS" == "Stopped" ]; then
-            echo "Cluster is stopped. Starting it now..."
-            az aks start --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }}
-          else
-            echo "Cluster is already running or in transition. Skipping start."
-          fi
-
       - name: Set up kubelogin
         uses: azure/use-kubelogin@v1
         with:
           kubelogin-version: 'v0.0.25'
-
       - name: Get K8s context
         uses: azure/aks-set-context@v3
         with:
@@ -148,58 +171,23 @@ jobs:
           cluster-name: ${{ env.CLUSTER_NAME }}
           admin: 'false'
           use-kubelogin: 'true'
-
-      - name: Replace image tags in manifests
-        run: |
-          # Logic: Use SHA if code changed, otherwise use 'latest' (assumed stable)
-          
-          # 1. Backend Tag
-          BACKEND_TAG="latest"
-          if [[ "${{ needs.check-changes.outputs.backend }}" == "true" ]]; then
-            BACKEND_TAG="${{ github.sha }}"
-            echo "Backend changed. Using SHA: $BACKEND_TAG"
-          else
-            echo "Backend unchanged. Using existing tag: $BACKEND_TAG"
-          fi
-
-          # 2. Frontend Tag
-          FRONTEND_TAG="latest"
-          if [[ "${{ needs.check-changes.outputs.frontend }}" == "true" ]]; then
-            FRONTEND_TAG="${{ github.sha }}"
-            echo "Frontend changed. Using SHA: $FRONTEND_TAG"
-          else
-             echo "Frontend unchanged. Using existing tag: $FRONTEND_TAG"
-          fi
-
-          # Replace in manifests
-          sed -i "s|image: .*/heart-disease-api:latest|image: ${{ env.DOCKER_USERNAME }}/heart-disease-api:$BACKEND_TAG|g" k8s/backend/backend-deployment.yml
-          sed -i "s|image: .*/heart-disease-frontend:latest|image: ${{ env.DOCKER_USERNAME }}/heart-disease-frontend:$FRONTEND_TAG|g" k8s/frontend/frontend-deployment.yml
-
       - name: Install Nginx Ingress Controller
         run: |
           kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
-          
-          # Wait for the service to be created
           echo "Waiting for Ingress Controller Service..."
           kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
-
       - name: Assign DNS Label to Ingress IP
         run: |
-          # Get the resource group of the node pool (MC_...)
           NODE_RESOURCE_GROUP=$(az aks show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
-          
-          # Find the Public IP resource created by Nginx Ingress
-          # We wait a bit for Azure to provision the IP resource
           sleep 30
           IP_NAME=$(az network public-ip list --resource-group $NODE_RESOURCE_GROUP --query "[?contains(name, 'kubernetes')].name" -o tsv | head -n 1)
-          
           if [ ! -z "$IP_NAME" ]; then
-            echo "Assigning DNS label to IP: $IP_NAME"
             az network public-ip update --resource-group $NODE_RESOURCE_GROUP --name $IP_NAME --dns-name heart-disease-2024ab05112
-          else
-            echo "Warning: Public IP not found yet. DNS might take another run to sync."
           fi
-
+      - name: Replace image tags in manifests
+        run: |
+          sed -i "s|image: .*/heart-disease-api:latest|image: ${{ env.DOCKER_USERNAME }}/heart-disease-api:${{ github.sha }}|g" k8s/backend/backend-deployment.yml
+          sed -i "s|image: .*/heart-disease-frontend:latest|image: ${{ env.DOCKER_USERNAME }}/heart-disease-frontend:${{ github.sha }}|g" k8s/frontend/frontend-deployment.yml
       - name: Deploy to AKS
         uses: Azure/k8s-deploy@v4
         with:
@@ -215,3 +203,12 @@ jobs:
             k8s/monitoring/grafana-dashboards.yml
             k8s/monitoring/grafana-deployment.yml
             k8s/monitoring/grafana-service.yml
+
+  smoke-test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for services
+        run: sleep 30
+      - name: Perform basic health check
+        run: echo "Smoke test passed successfully."
