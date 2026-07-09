@@ -1,6 +1,39 @@
+# Virtual environments
+.venv/
 venv/
+env/
+
+# Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 .pytest_cache/
+
+# MLflow
 mlruns/
+
+# Models & artifacts
+mlruns/
+*.json
+*.csv
+classification_report_logistic_regression.txt
+classification_report_random_forest.txt
+
+# Logs
+*.log
+logs/
+app_log/
+
+# Coverage
+htmlcov/
+.coverage
+
+# OS / editor
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# SSH keys
+.ssh/

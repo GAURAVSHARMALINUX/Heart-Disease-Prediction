@@ -1,0 +1,8 @@
+﻿fastapi
+uvicorn
+pandas
+scikit-learn
+mlflow
+prometheus-client
+pydantic
+python-dotenv

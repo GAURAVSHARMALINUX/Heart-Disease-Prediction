@@ -1,4 +1,5 @@
-FROM python:3.9-slim
+FROM python:3.12-slim
+
 
 WORKDIR /app
 
@@ -7,9 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Run migrations and collect static files
-RUN python manage.py migrate
+EXPOSE 8000
 
-EXPOSE 80
-
-CMD ["gunicorn", "--bind", "0.0.0.0:80", "heart_disease_app.wsgi:application"]
+# Using 0.0.0.0 to bind to all interfaces in container
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

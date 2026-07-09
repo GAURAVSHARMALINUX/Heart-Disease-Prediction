@@ -1,71 +1,63 @@
-# Heart Disease Prediction - MLOps Assignment 01
+# Heart Disease Prediction: End-to-End MLOps Solution
 
-This repository contains an end-to-end Machine Learning Operations (MLOps) pipeline for predicting heart disease based on the UCI Heart Disease dataset.
+[![CI/CD Pipeline](https://github.com/2024ab05112/heart-disease-app/actions/workflows/deploy.yml/badge.svg)](https://github.com/2024ab05112/heart-disease-app/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Project Structure
+A production-ready machine learning system for heart disease risk prediction, featuring automated CI/CD, experiment tracking with MLflow, and scalable deployment on Azure Kubernetes Service (AKS).
 
-- `data/`: Contains the download script and downloaded data.
-- `src/`: Core Python modules for data preprocessing and model training.
-- `notebooks/`: Jupyter notebook for EDA and prototyping.
-- `api/`: FastAPI application for serving the model.
-- `tests/`: Pytest test suite for testing data and model API.
-- `models/`: Saved joblib models and MLflow artifacts.
-- `k8s/`: Kubernetes manifests for deployment.
-- `.github/workflows/`: CI/CD pipeline definition using GitHub Actions.
+## Live Access
+All services are routed via a unified Nginx Ingress Controller:
+- **Web Application:** [Frontend UI](http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com/)
+- **API Documentation:** [Swagger UI](http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com/api/docs)
+- **Monitoring:** [Grafana Dashboard](http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com/grafana/) | [Prometheus UI](http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com/prometheus/)
 
-## Setup Instructions
+---
 
-1. **Install Requirements:**
-   Ensure Python 3.9+ is installed.
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Official Project Documentation
+For the complete end-to-end report covering EDA, model details, architecture, and CI/CD workflows, please refer to:
+- [**Project Documentation (Word)**](docs/Project_Documentation.docx)
+- [**Video Walkthrough / Demo**](https://drive.google.com/file/d/1EAkUQg3R94hodZxZxqRHMX2v1R3LgmU4/view)
+- [**Technical Wiki**](https://github.com/2024ab05112/heart-disease-app/wiki)
 
-2. **Download Data:**
-   ```bash
-   python data/download_data.py
-   ```
+---
 
-3. **Train Model:**
-   ```bash
-   python src/train.py
-   ```
+## System Architecture
+The system utilizes a unified microservices architecture routed via a high-performance Nginx Ingress Controller.
 
-4. **Run API locally:**
-   ```bash
-   uvicorn api.app:app --host 0.0.0.0 --port 8000
-   ```
-   Access Swagger UI at `http://localhost:8000/docs`.
+```mermaid
+graph TD
+    User((User)) -->|Single IP| Ingress[Nginx Ingress]
+    Ingress -->|/| Frontend[Frontend Web]
+    Ingress -->|/api| Backend[Backend API]
+    Ingress -->|/grafana| Grafana[Grafana]
+    Ingress -->|/prometheus| Prometheus[Prometheus]
+    
+    Frontend -->|Internal Comms| Backend
+    Backend -->|Metrics| Prometheus
+    Prometheus -->|DB Query| Grafana
+```
 
-5. **Run Tests:**
-   ```bash
-   pytest tests/
-   ```
+---
 
-## Docker and Deployment
+## Quick Start (Local Setup)
 
-**Build Docker Image:**
+The easiest way to run the entire stack locally is via Docker Compose.
+
+### Execution
 ```bash
-docker build -t heart-disease-api:latest .
+# Build and start all services
+docker-compose up --build
 ```
+The application will be available at http://localhost.
 
-**Run Container:**
-```bash
-docker run -p 8000:8000 heart-disease-api:latest
-```
+---
 
-**Kubernetes Deployment (Standard Manifests):**
-```bash
-kubectl apply -f k8s/deployment.yaml
-```
+## CI/CD Workflow
+The project follows a robust automation lifecycle via GitHub Actions:
+1. **Validation:** Automated linting and unit tests.
+2. **Containerization:** Concurrent Docker builds.
+3. **Auto-Infra:** Automatic AKS cluster management and Ingress installation.
+4. **Deployment:** Dynamic DNS mapping and rollout to Azure.
 
-**Helm Chart Deployment (Recommended):**
-```bash
-helm upgrade --install heart-disease-api ./helm/heart-disease-api
-```
-
-## Monitoring
-The API is instrumented with Prometheus. You can access the real-time metrics endpoint at:
-```
-http://localhost:8000/metrics
-```
+---
+*Developed as part of the MLOps Assignment*
