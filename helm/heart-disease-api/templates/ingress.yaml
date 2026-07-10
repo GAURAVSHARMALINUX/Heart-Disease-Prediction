@@ -1,0 +1,48 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-ingress
+  labels:
+    app.kubernetes.io/name: unified-gateway
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+spec:
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-grafana-service
+            port:
+              number: {{ .Values.grafana.service.port }}
+      - path: /prometheus
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-prometheus-service
+            port:
+              number: {{ .Values.prometheus.service.port }}
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-backend-service
+            port:
+              number: {{ .Values.backend.service.port }}
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-frontend-service
+            port:
+              number: {{ .Values.frontend.service.port }}
+{{- end }}

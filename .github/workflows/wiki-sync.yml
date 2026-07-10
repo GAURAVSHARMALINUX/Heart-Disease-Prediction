@@ -1,50 +1,19 @@
-name: Sync Wiki
+name: Sync Wiki (Disabled - Duplicate)
+
+# This workflow is disabled. Use update-wiki.yml instead.
+# Both workflows were doing the same job but watching different folders.
+# update-wiki.yml watches wiki_content/ which is the correct folder.
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'wiki/**'
-      - '.github/workflows/wiki-sync.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'This workflow is disabled. Use update-wiki.yml'
+        required: false
 
 jobs:
-  update-wiki:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main repo
-        uses: actions/checkout@v3
-
-      - name: Push to Wiki Repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Set up git identity
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # We need to extract the repository name to form the wiki url
-          WIKI_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git"
-          
-          # Clone the wiki repository
-          # Note: If the wiki hasn't been initialized yet on GitHub (by creating at least one page manually), 
-          # this clone will fail.
-          git clone $WIKI_URL wiki-repo || {
-            echo "Failed to clone wiki. Please make sure the Wiki is enabled in repository settings and at least one page is created manually."
-            exit 1
-          }
-          
-          # Sync files from local wiki/ folder to wiki-repo/
-          # We use rsync to ensure files deleted in the main repo's wiki/ folder are also deleted in the wiki-repo
-          rsync -av --delete --exclude='.git' wiki/ wiki-repo/
-          
-          cd wiki-repo
-          git add .
-          
-          # Commit and push if there are changes
-          if git diff-index --quiet HEAD; then
-            echo "No changes to commit."
-          else
-            git commit -m "Automated wiki update from main repository"
-            git push $WIKI_URL HEAD:master
-          fi
+      - name: Notice
+        run: echo "This workflow is disabled. Use update-wiki.yml instead."

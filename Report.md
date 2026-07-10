@@ -82,7 +82,39 @@ An isolated secondary pipeline (`wiki-sync.yml`) exists exclusively to sync Mark
 
 ---
 
-## 9. Conclusion
-This project successfully fulfills all the requirements of an end-to-end MLOps pipeline. It transitions a raw CSV dataset into a monitored, containerized, and automatically tested Kubernetes-ready API, demonstrating practical automation and production deployment capabilities.
+## 9. Deployment Verification & Screenshots
 
-*(Note: Insert Deployment, API output, and MLflow Screenshots here for final submission)*
+The following endpoints were verified live after AKS deployment:
+
+| Service | URL | Status |
+|---------|-----|--------|
+| Frontend Web App | `http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com/` | Live |
+| API Swagger Docs | `http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com/api/docs` | Live |
+| Grafana Dashboard | `http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com/grafana/` | Live |
+| Prometheus UI | `http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com/prometheus/` | Live |
+
+### Sample API Response (`/api/predict`):
+```json
+{
+  "prediction": 1,
+  "confidence": 0.87
+}
+```
+
+### CI/CD Pipeline Execution
+The full GitHub Actions pipeline (lint -> test -> train -> build -> deploy -> smoke-test) completes successfully on every push to `main`. Deployment screenshots are available in `docs/Screenshots/`.
+
+---
+
+## 10. Conclusion
+
+This project successfully fulfills all the requirements of an end-to-end MLOps pipeline. The system transitions raw UCI Heart Disease CSV data into a monitored, containerized, and automatically tested Kubernetes-ready dual-service application.
+
+Key achievements:
+- Automated data ingestion and reproducible preprocessing pipeline
+- Two ML models (Logistic Regression & Random Forest) with full MLflow experiment tracking
+- FastAPI backend with `/api/predict` endpoint, confidence scores, and Prometheus metrics
+- Django frontend for end-user interaction
+- Multi-job GitHub Actions CI/CD with linting, unit tests, training, and AKS deployment
+- Production-grade Prometheus + Grafana monitoring stack on Kubernetes
+- Automated smoke testing after every deployment
