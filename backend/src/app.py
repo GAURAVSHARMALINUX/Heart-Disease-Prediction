@@ -1,4 +1,4 @@
-# v1.0.1 - Heart Disease Prediction API
+# v1.0.2 - Heart Disease Prediction API
 import logging
 import time
 from typing import Optional
