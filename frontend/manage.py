@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# v1.0.6 - Django Frontend
+# v1.0.7 - Django Frontend
 import os
 import sys
 
