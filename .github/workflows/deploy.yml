@@ -184,6 +184,7 @@ jobs:
             k8s/backend/backend-deployment.yml
             k8s/backend/backend-service.yml
             k8s/frontend/frontend-deployment.yml
+            k8s/common/ingress.yml
             k8s/monitoring/prometheus-config.yml
             k8s/monitoring/prometheus-deployment.yml
             k8s/monitoring/prometheus-service.yml
