@@ -1,16 +1,13 @@
-name: Frontend CI/CD
+name: PR Check - Frontend
+# This workflow runs ONLY on Pull Requests as a quality gate.
+# On push to main, frontend build is handled by build-frontend job in deploy.yml
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'frontend/**'
-      - 'helm/**'
-      - '.github/workflows/frontend.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'frontend/**'
+      - '.github/workflows/frontend.yml'
 
 jobs:
   docker-build-push:
