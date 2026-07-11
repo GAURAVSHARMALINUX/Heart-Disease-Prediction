@@ -205,7 +205,7 @@ jobs:
           MAX_WAIT=300
           INTERVAL=20
           ELAPSED=0
-          until curl -s --max-time 10 "$BASE_URL/health" | grep -q "ok" 2>/dev/null; do
+          until curl -s --max-time 10 "$BASE_URL/api/" | grep -q "API is running" 2>/dev/null; do
             if [ $ELAPSED -ge $MAX_WAIT ]; then
               echo "ERROR: Service did not become available within ${MAX_WAIT}s"
               exit 1
@@ -220,8 +220,8 @@ jobs:
         run: |
           BASE_URL="http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com"
           echo "--- Testing Backend Health ---"
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$BASE_URL/health")
-          echo "Backend /health returned: $HTTP_STATUS"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$BASE_URL/api/")
+          echo "Backend /api/ returned: $HTTP_STATUS"
           if [ "$HTTP_STATUS" != "200" ]; then
             echo "ERROR: Backend health check failed with status $HTTP_STATUS"
             exit 1
