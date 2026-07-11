@@ -196,8 +196,24 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for services to stabilize
-        run: sleep 60
+      - name: Wait for DNS propagation and services to stabilize
+        run: |
+          BASE_URL="http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com"
+          echo "Waiting for DNS to propagate and services to start..."
+          MAX_WAIT=300
+          INTERVAL=20
+          ELAPSED=0
+          until curl -s --max-time 10 "$BASE_URL/health" | grep -q "ok" 2>/dev/null; do
+            if [ $ELAPSED -ge $MAX_WAIT ]; then
+              echo "ERROR: Service did not become available within ${MAX_WAIT}s"
+              exit 1
+            fi
+            echo "Attempt at ${ELAPSED}s: Service not ready yet, retrying in ${INTERVAL}s..."
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+          echo "Service is UP after ${ELAPSED}s. Proceeding with smoke tests."
+
       - name: Health check - Backend API
         run: |
           BASE_URL="http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com"
@@ -209,6 +225,7 @@ jobs:
             exit 1
           fi
           echo "Backend health check PASSED"
+
       - name: Smoke test - Predict endpoint
         run: |
           BASE_URL="http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com"
@@ -230,6 +247,7 @@ jobs:
             exit 1
           fi
           echo "Predict endpoint smoke test PASSED"
+
       - name: Smoke test - Frontend
         run: |
           BASE_URL="http://heart-disease-2024ab05112.centralindia.cloudapp.azure.com"
