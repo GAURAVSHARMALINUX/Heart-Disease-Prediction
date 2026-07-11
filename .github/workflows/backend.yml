@@ -1,16 +1,13 @@
-name: CI/CD Pipeline
+name: PR Check - Backend
+# This workflow runs ONLY on Pull Requests as a quality gate.
+# On push to main, the full pipeline is handled by deploy.yml
 
 on:
-  push:
-    branches: [ main ]
-    paths-ignore:
-      - 'wiki/**'
-      - '.github/workflows/wiki-sync.yml'
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - 'wiki/**'
-      - '.github/workflows/wiki-sync.yml'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
 
 jobs:
   code-quality:
@@ -94,23 +91,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ secrets.DOCKER_USERNAME }}/heart-disease-api:latest
 
-  deploy-aks:
-    name: Deploy Backend to AKS
-    needs: docker-build-push
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Kubeconfig
-        uses: azure/k8s-set-context@v3
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.AZURE_KUBE_CONFIG }}
-
-      - name: Deploy via Helm
-        run: |
-          helm upgrade --install heart-disease-api ./helm/heart-disease-api \
-            --set backend.image.repository=${{ secrets.DOCKER_USERNAME }}/heart-disease-api \
-            --set backend.image.tag=latest
+  # Deploy is intentionally removed from this workflow.
+  # Full deployment is handled by deploy.yml on push to main.
