@@ -65,6 +65,8 @@ def data_cleaning():
 
 
 def data_visualization(df):
+    os.makedirs("reports", exist_ok=True)
+
     plt.figure(figsize=(20, 10))
     sns.heatmap(df.corr(), annot=True)
     plt.savefig("reports/correlation_heatmap.png")
