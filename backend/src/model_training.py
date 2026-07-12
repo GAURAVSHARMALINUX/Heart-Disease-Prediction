@@ -124,7 +124,11 @@ def train_models(preprocessor, X_train, X_test, y_train, y_test):
             )
 
             # Log the best tuned model
-            mlflow.sklearn.log_model(best_pipeline, "model")
+            mlflow.sklearn.log_model(
+                best_pipeline,
+                "model",
+                serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE
+            )
 
             # Cross-validation on tuned model
             cv_metrics = cross_validate_model(
