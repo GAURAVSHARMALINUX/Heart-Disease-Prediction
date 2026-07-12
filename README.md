@@ -1,6 +1,6 @@
 # Heart Disease Prediction: End-to-End MLOps Solution
 
-[![CI/CD Pipeline](https://github.com/2024ab05112/heart-disease-app/actions/workflows/deploy.yml/badge.svg)](https://github.com/2024ab05112/heart-disease-app/actions)
+[![CI/CD Pipeline](https://github.com/GAURAVSHARMALINUX/Heart-Disease-Prediction/actions/workflows/deploy.yml/badge.svg)](https://github.com/GAURAVSHARMALINUX/Heart-Disease-Prediction/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A production-ready machine learning system for heart disease risk prediction, featuring automated CI/CD, experiment tracking with MLflow, and scalable deployment on Azure Kubernetes Service (AKS).
@@ -17,7 +17,7 @@ All services are routed via a unified Nginx Ingress Controller:
 For the complete end-to-end report covering EDA, model details, architecture, and CI/CD workflows, please refer to:
 - [**Project Documentation (Word)**](docs/Project_Documentation.docx)
 - [**Video Walkthrough / Demo**](https://drive.google.com/file/d/1EAkUQg3R94hodZxZxqRHMX2v1R3LgmU4/view)
-- [**Technical Wiki**](https://github.com/2024ab05112/heart-disease-app/wiki)
+- [**Technical Wiki**](https://github.com/GAURAVSHARMALINUX/Heart-Disease-Prediction/wiki)
 
 ---
 
