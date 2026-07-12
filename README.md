@@ -16,7 +16,7 @@ All services are routed via a unified Nginx Ingress Controller:
 ## Official Project Documentation
 For the complete end-to-end report covering EDA, model details, architecture, and CI/CD workflows, please refer to:
 - [**Project Documentation (Word)**](docs/Project_Documentation.docx)
-- [**Video Walkthrough / Demo**](https://drive.google.com/file/d/1EAkUQg3R94hodZxZxqRHMX2v1R3LgmU4/view)
+- [**Video Walkthrough / Demo**](https://drive.google.com/file/d/1a55ev7WZ6MFO6AN7pAEagmvFxSHVreZj/view)
 - [**Technical Wiki**](https://github.com/GAURAVSHARMALINUX/Heart-Disease-Prediction/wiki)
 
 ---
